@@ -1,0 +1,19 @@
+{
+  "name": "113-1-cpend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "REStat.js",
+  "dependencies": {
+    "chalk": "^4.1.0",
+    "clui": "^0.3.6",
+    "dotenv": "^8.2.0",
+    "node-fetch": "^2.6.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
