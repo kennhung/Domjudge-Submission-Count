@@ -2,84 +2,44 @@ require('dotenv').config();
 const fetch = require('node-fetch');
 const { Line } = require('clui');
 const chalk = require('chalk');
+const { getTeamsStat } = require('./lib');
 
 const authHeaders = {
     Authorization: `Basic ${process.env.DJ_TOKEN}`
 };
 
-const getTeamsStat = (teams, submissions, judgements, type) => {
-    const processed = submissions.map(({ id, team_id }) => {
-        const d = judgements.filter(({ submission_id }) => {
-            return submission_id === id;
-        });
+const getTeams = (judgeURL, contestId) => {
+    return fetch(`${judgeURL}/api/v4/contests/${contestId}/teams`, {
+        headers: new fetch.Headers({
+            ...authHeaders
+        })
+    }).then((resp) => resp.json());
+}
 
-        if (d.findIndex(({ judgement_type_id }) => judgement_type_id === "AC") !== -1) {
-            return {
-                team_id,
-                judgement_type_id: "AC"
-            }
-        } else {
-            if (d.length === 0) {
-                console.log(id, team_id, d);
+const getSubmissions = (judgeURL, contestId) => {
+    return fetch(`${judgeURL}/api/v4/contests/${contestId}/submissions`, {
+        headers: new fetch.Headers({
+            ...authHeaders
+        })
+    }).then((resp) => resp.json());
+}
 
-                return {
-                    team_id,
-                    judgement_type_id: "ERR"
-                }
-            }
-
-            return {
-                team_id,
-                judgement_type_id: d[d.length - 1].judgement_type_id
-            }
-        }
-    }).filter(({ judgement_type_id }) => judgement_type_id === type);
-
-
-    let total = 0;
-
-
-    const stat = teams.map((t) => {
-        const { name, externalid, id } = t;
-        const count = processed.filter(({ team_id }) => team_id === id).length;
-
-        total += count;
-
-        return {
-            name,
-            externalid,
-            count
-        }
-    }).filter(({ count }) => count > 0).sort((a, b) => {
-        return b.count - a.count;
-    });
-
-    return {
-        stat,
-        total
-    };
+const getJudgements = (judgeURL, contestId) => {
+    return fetch(`${judgeURL}/api/v4/contests/${contestId}/judgements`, {
+        headers: new fetch.Headers({
+            ...authHeaders
+        })
+    }).then((resp) => resp.json());
 }
 
 (async () => {
 
 
-    const teams = await fetch('http://113-judge.csie.io:9090/api/v4/contests/6/teams', {
-        headers: new fetch.Headers({
-            ...authHeaders
-        })
-    }).then((resp) => resp.json());
+    const teams = await getTeams(process.env.DJ_URL, process.env.CONTEST_ID);
 
-    const submissions = await fetch('http://113-judge.csie.io:9090/api/v4/contests/6/submissions', {
-        headers: new fetch.Headers({
-            ...authHeaders
-        })
-    }).then((resp) => resp.json());
+    const submissions = await getSubmissions(process.env.DJ_URL, process.env.CONTEST_ID);
 
-    const judgements = await fetch('http://113-judge.csie.io:9090/api/v4/contests/6/judgements', {
-        headers: new fetch.Headers({
-            ...authHeaders
-        })
-    }).then((resp) => resp.json());
+    const judgements = await getJudgements(process.env.DJ_URL, process.env.CONTEST_ID);
 
 
     const stat = (type) => {
@@ -92,7 +52,7 @@ const getTeamsStat = (teams, submissions, judgements, type) => {
             .column('count', 10, [chalk.cyan])
             .output();
 
-            stat.forEach(({ externalid, name, count }) => {
+        stat.forEach(({ externalid, name, count }) => {
             new Line()
                 .padding(2)
                 .column(externalid || "n/a", 15, [chalk.grey])
