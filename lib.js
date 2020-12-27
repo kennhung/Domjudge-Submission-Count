@@ -1,5 +1,7 @@
-const getTeamsStat = (teams, submissions, judgements, type) => {
-    const processed = submissions.map(({ id, team_id }) => {
+const getProcessedSubmissions = (submissions, judgements, type) => {
+    return submissions.map((submission) => {
+        const { id, team_id } = submission;
+
         const d = judgements.filter(({ submission_id }) => {
             return submission_id === id;
         });
@@ -7,6 +9,7 @@ const getTeamsStat = (teams, submissions, judgements, type) => {
         if (d.findIndex(({ judgement_type_id }) => judgement_type_id === "AC") !== -1) {
             return {
                 team_id,
+                submission,
                 judgement_type_id: "AC"
             }
         } else {
@@ -15,17 +18,23 @@ const getTeamsStat = (teams, submissions, judgements, type) => {
 
                 return {
                     team_id,
+                    submission,
                     judgement_type_id: "ERR"
                 }
             }
 
             return {
                 team_id,
+                submission,
                 judgement_type_id: d[d.length - 1].judgement_type_id
             }
         }
     }).filter(({ judgement_type_id }) => judgement_type_id === type);
+}
 
+const getTeamsStat = (teams, submissions, judgements, type) => {
+
+    const processed = getProcessedSubmissions(submissions, judgements, type);
 
     let total = 0;
 
@@ -53,6 +62,7 @@ const getTeamsStat = (teams, submissions, judgements, type) => {
 
 if (typeof window === 'undefined') {
     module.exports = {
-        getTeamsStat
+        getTeamsStat,
+        getProcessedSubmissions
     }
 }
